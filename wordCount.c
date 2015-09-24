@@ -28,18 +28,15 @@ void prepare(){
 
 	printf("Malloc done!\n");
 
+
 	memset(word_buffer, 0, sizeof(char *) * word_buffer_size);
 
 	for(i=0;i<word_buffer_size;i++){
 
 		fscanf(f, "%31s", word);
 
-		//printf("About to small malloc, strlen = %d\n", strlen(word));
-
 		//word_buffer[i] = malloc( sizeof(char) * strlen(word));
 		word_buffer[i] = malloc( 32 );
-
-		//printf("Did small malloc\n");
 
 		if(word_buffer[i] == NULL)
 			perror("Malloc (for)"), exit(-1);
