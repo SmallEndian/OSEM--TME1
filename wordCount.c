@@ -25,13 +25,21 @@ void prepare(){
 	if(word_buffer == NULL)
 		perror("malloc"), exit(-1);
 
+
+	printf("Malloc done!\n");
+
 	memset(word_buffer, 0, sizeof(char *) * word_buffer_size);
 
 	for(i=0;i<word_buffer_size;i++){
 
 		fscanf(f, "%31s", word);
 
-		word_buffer[i] = malloc( sizeof(char) * strlen(word));
+		//printf("About to small malloc, strlen = %d\n", strlen(word));
+
+		//word_buffer[i] = malloc( sizeof(char) * strlen(word));
+		word_buffer[i] = malloc( 32 );
+
+		//printf("Did small malloc\n");
 
 		if(word_buffer[i] == NULL)
 			perror("Malloc (for)"), exit(-1);
@@ -40,7 +48,7 @@ void prepare(){
 	}
 }
 
-void cleanup(int word_buffer_size){
+void cleanup(){
 
 	int i;
 	for(i=0;i<word_buffer_size; i++)
@@ -49,7 +57,29 @@ void cleanup(int word_buffer_size){
 
 }
 
+void test(){
+
+	int i = 0;
+	for(i=0;i<100;i++){
+		printf(" %s ", word_buffer[i]);
+	}
+	printf("DONE!\n");
+
+}
+
 int main(void){
+
+	word_buffer_size = 1000;
+
+	printf("Prepare:\n");
+	prepare();
+
+	printf("test\n");
+	test();
+
+	printf("cleanup\n");
+	cleanup();
+
 
 
 	return 0;
