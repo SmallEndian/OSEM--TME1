@@ -6,9 +6,11 @@
 
 #define PATH "/tmp/text"
 
-char ** tab;
+static char ** word_buffer;
+static int word_buffer_size;
 
-void prepare(int tab_size){
+
+void prepare(){
 
 	int i;
 	FILE *f;
@@ -17,25 +19,34 @@ void prepare(int tab_size){
 	f = fopen(PATH, "r");
 	if(f == NULL)
 		perror("fopen"), exit(-1);
-	
 
-	tab = malloc(sizeof(char *) * tab_size);
-	if(tab == NULL)
+
+	word_buffer = malloc(sizeof(char *) * word_buffer_size);
+	if(word_buffer == NULL)
 		perror("malloc"), exit(-1);
 
-	memset(tab, 0, sizeof(char *) * tab_size);
+	memset(word_buffer, 0, sizeof(char *) * word_buffer_size);
 
-	for(i=0;i<tab_size-1;i++){
-	
+	for(i=0;i<word_buffer_size;i++){
+
 		fscanf(f, "%31s", word);
-		
-		tab[i] = malloc( sizeof(char) * strlen(word));
 
-		if(tab[i] == NULL)
+		word_buffer[i] = malloc( sizeof(char) * strlen(word));
+
+		if(word_buffer[i] == NULL)
 			perror("Malloc (for)"), exit(-1);
 
-		strncpy(tab[i], word, 31);
+		strncpy(word_buffer[i], word, 31);
 	}
+}
+
+void cleanup(int word_buffer_size){
+
+	int i;
+	for(i=0;i<word_buffer_size; i++)
+		free(word_buffer[i]);
+	free(word_buffer);
+
 }
 
 int main(void){
