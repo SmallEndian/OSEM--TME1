@@ -1,0 +1,1 @@
+mcopy -i /users/enseig/lesenech/Documents/OSEM/almos-tsar-mipsel-1.0/test/pf1/hdd-img.bin shrc ::/etc/shrc
