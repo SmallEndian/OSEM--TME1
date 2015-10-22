@@ -13,8 +13,8 @@
 	}while(0)
 
 // DEFINE "./text" pour linux ou "/bin/TEXT" pour tsar
-//#define PATH "/bin/TEXT"
-#define PATH "./text"
+#define PATH "/bin/TEXT"
+//#define PATH "./text"
 static pthread_mutex_t output_lock = PTHREAD_MUTEX_INITIALIZER;
 static int total_words = 5000;
 static int word_buffer_size;
@@ -57,25 +57,29 @@ void *thread_func(void *arg)
 	// comptage
 	for(i= argz->index_base; i< (argz->index_base + argz->index_range); i++)
 	{	
+	pthread_mutex_lock(&mutex);
 		if ( strlen(word_buffer[i]) <= 0)
-			count_local[0]++;
+			count_array[0]++;
 		else if ( strlen(word_buffer[i]) >= 33)
-			count_local[31]++;
+			count_array[31]++;
 		else
-			count_local[strlen(word_buffer[i])-1]++;
+			count_array[strlen(word_buffer[i])-1]++;
 		//printf_r("worker n %d scanning %d eme mot..\n",argz->worker_id,i);
 		// unlock
+	pthread_mutex_unlock(&mutex);
 	}
 		// lock
 		// ecriture
 	/*
 	 *	Les mutex c'est cher. Évitons les!
 	 */
+/*
 	pthread_mutex_lock(&mutex);
 	for(i = 0;i <32; i++){
 		count_array[i] += count_local[i];
 	}
 	pthread_mutex_unlock(&mutex);
+	*/
 
 	free(arg);
 	return NULL;
@@ -146,7 +150,7 @@ int main(int argc, char *argv[])
 	struct arg_struct*  state;
 	int i,err;
 	clock_t start;	
-	clock_t taken;
+	int taken;
 	// allocation du tableau contenant les IDs des threads, un thread pour chaque core
 	workers_nb = sysconf(_SC_NPROCESSORS_ONLN);
 	workers_nb = (workers_nb < 1) ? 1 : workers_nb;
