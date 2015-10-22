@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #define printf_r(...)					\
 	do{						\
@@ -11,10 +12,11 @@
 		pthread_mutex_unlock(&output_lock);	\
 	}while(0)
 
+// DEFINE "./text" pour linux ou "/bin/TEXT" pour tsar
+//#define PATH "/bin/TEXT"
 #define PATH "./text"
-
 static pthread_mutex_t output_lock = PTHREAD_MUTEX_INITIALIZER;
-static int total_words = 170000;
+static int total_words = 5000;
 static int word_buffer_size;
 static char ** word_buffer;
 static int count_array[32];
@@ -43,7 +45,7 @@ void *thread_func(void *arg)
 	//
 	//affichage de debut de thread
 	printf_r("----------------------\n");
-	printf_r("Thread created    pid %d, tid %d\n   parameters: worker_id %d   index_base %d   index_range %d \n",
+	printf_r("Thread created    pid %d, tid %d   parameters: worker_id %d   index_base %d   index_range %d \n",
 			pid,
 			tid,
 			(int) argz->worker_id,
@@ -55,7 +57,12 @@ void *thread_func(void *arg)
 	// comptage
 	for(i= argz->index_base; i< (argz->index_base + argz->index_range); i++)
 	{	
-		count_local[strlen(word_buffer[i])]++;
+		if ( strlen(word_buffer[i]) <= 0)
+			count_local[0]++;
+		else if ( strlen(word_buffer[i]) >= 33)
+			count_local[31]++;
+		else
+			count_local[strlen(word_buffer[i])-1]++;
 		//printf_r("worker n %d scanning %d eme mot..\n",argz->worker_id,i);
 		// unlock
 	}
@@ -133,11 +140,13 @@ void test(){
 
 int main(int argc, char *argv[])
 {
+
 	pthread_t *tids_tbl;
 	int workers_nb;
 	struct arg_struct*  state;
 	int i,err;
-	
+	clock_t start;	
+	clock_t taken;
 	// allocation du tableau contenant les IDs des threads, un thread pour chaque core
 	workers_nb = sysconf(_SC_NPROCESSORS_ONLN);
 	workers_nb = (workers_nb < 1) ? 1 : workers_nb;
@@ -153,8 +162,8 @@ int main(int argc, char *argv[])
 	// lecture du fichier texte et stockage des mots dans word_buffer
  	prepare();
 
-	printf("Creation des threads...");	
 	// creation des threads workers
+	printf("Creation des threads...\n");	
 	if(tids_tbl == NULL)
 	{
 		printf("Main: failed to allocate tids_tbl\n");
@@ -162,7 +171,8 @@ int main(int argc, char *argv[])
 	}
 
 
-
+	start = clock();
+	
 	for(i = 0; i < workers_nb; i++)
 	{	
 		// allocation des arguments. 
@@ -179,9 +189,13 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
-	
-	workers_nb = i;
-	
+
+	// calcul du temps d'allocation et de creation des threads
+        taken = (int)(clock() - start);
+	printf_r("[Temps de creations des threads : %d cycles]\n",taken);
+        start = clock();	
+
+	workers_nb = i;	
 	// attente de terminaisons des threads
 	for(i = 0; i < workers_nb; i++)
 	{
@@ -190,36 +204,35 @@ int main(int argc, char *argv[])
 		if(err)
 			printf_r("Main: failed to join thread #%d, err %d\n", i, err);
 		else
-			printf_r("Main: thread #%d has finished with return value %d\n", i, state);
+			printf_r("Main: thread #%d has finished\n ",i);//%d\n", i, state);
 
 		// desaloue la structure passee en argument ..?
 		//free(state);
 	}
 
-
-	/*
-	 * Test
-	 */
+	// test
 	err = 0;
 	for(i=0;i<32;i++)
 		err += count_array[i];
 	if(err != word_buffer_size)
-		printf("#####################T'es dans la merde gros!\n");
+		printf("#####################Tout les mots n'ont pas ete scannés!\n");
 
-
-
-	// affichage du texte considere
-	//test();
 	
+	// calcul de temps de traitement
+	taken = (int)(clock()- start);
+	printf_r("[Temps de traitement : %d cycles]\n",taken);
+
 	// affichage des resultats	
-	for(i=0;i<33;i++)
-		printf("il y a %d mots avec %d caracteres\n", count_array[i], i);	
+	for(i=0;i<32;i++)
+		printf("il y a %d mots avec %d caracteres\n", count_array[i], i+1);	
 	
-	printf("desalocation\n");
 	// desaloue le tableau des threads
 	free(tids_tbl);
 	// desaloue le tableau des mots 
 	cleanup();
+
+	//Demande de fermeture du simulateur
+	printf("TheEndIsTheMeanToAnEnd\n");
 
 	return 0;
 }
